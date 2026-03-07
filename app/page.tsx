@@ -159,8 +159,8 @@ export default function HomePage() {
       <footer className="mt-auto border-t border-border bg-muted/20 py-10">
         <div className="container mx-auto max-w-6xl px-4 flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-muted-foreground">
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 items-center">
-            <Link href="/" className="font-semibold text-foreground hover:text-primary transition-colors">
-              Eventix
+            <Link href="/" className="font-semibold text-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5">
+              Eventix <span className="font-normal text-muted-foreground">© {new Date().getFullYear()}</span>
             </Link>
           </div>
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">

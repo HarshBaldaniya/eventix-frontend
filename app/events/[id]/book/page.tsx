@@ -69,11 +69,10 @@ export default function BookEventPage() {
     ? Math.min(event.remaining_spots, bookingLimit)
     : 1;
 
-  useEffect(() => {
-    if (event && ticketCount > maxTickets) {
-      setTicketCount(maxTickets);
-    }
-  }, [event, maxTickets, ticketCount]);
+  // Clamp ticket count to max when event/max changes (during render, not in effect)
+  if (event && ticketCount > maxTickets) {
+    setTicketCount(maxTickets);
+  }
 
   const doBooking = async () => {
     if (!event || !id || isSubmitting) return;

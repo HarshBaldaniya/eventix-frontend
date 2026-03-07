@@ -8,13 +8,11 @@ import type { Pagination } from '@/lib/api';
 import { LazyEventCard } from '@/components/lazy-event-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ChevronLeftIcon, ChevronRightIcon, ShieldCheck, Filter, LockIcon, ChevronDownIcon, CheckCircleIcon, XCircleIcon } from 'lucide-react';
-import { ProtectedRoute } from '@/components/protected-route';
+import { ChevronLeftIcon, ChevronRightIcon, CalendarPlus, Filter, LockIcon, ChevronDownIcon, CheckCircleIcon, XCircleIcon } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -46,7 +44,7 @@ function AdminEventCardWrapper({ event, index, onStatusUpdate }: { event: Event,
                 ) : (
                     <DropdownMenu>
                         <DropdownMenuTrigger
-                            className="inline-flex items-center justify-center rounded-md font-medium h-8 w-fit px-3 gap-2 text-sm bg-background border border-input shadow-sm hover:bg-muted/50 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                            className="inline-flex cursor-pointer items-center justify-center rounded-md font-medium h-8 w-fit px-3 gap-2 text-sm bg-background border border-input shadow-sm hover:bg-muted/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
                             disabled={isUpdating}
                         >
                             {isUpdating ? (
@@ -132,23 +130,29 @@ function AdminEventsPageContent() {
     };
 
     return (
-        <div className="container mx-auto max-w-6xl py-12 px-4">
-            <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+        <div className="container mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 md:py-12">
+            <div className="mb-8 flex flex-col gap-4 sm:mb-10 sm:gap-6 md:flex-row md:items-end md:justify-between">
                 <div>
-                    <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-                        <ShieldCheck className="h-8 w-8 text-primary" />
-                        Admin Dashboard
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl">
+                        Manage Events
                     </h1>
-                    <p className="mt-2 text-muted-foreground">
-                        Manage all events across the platform. Update statuses below.
+                    <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">
+                        View all events, update statuses, or create a new event.
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-lg border border-border shrink-0">
-                    <Filter className="h-4 w-4 text-muted-foreground ml-2" />
-                    <span className="text-sm font-medium text-muted-foreground hidden sm:inline">Filter by Status:</span>
+                <div className="flex flex-wrap items-center gap-3">
+                    <Link href="/admin/events/new" className="cursor-pointer">
+                        <Button className="cursor-pointer gap-2 rounded-xl">
+                            <CalendarPlus className="h-4 w-4" />
+                            Create Event
+                        </Button>
+                    </Link>
+                    <div className="flex w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-muted/30 p-2 sm:w-auto sm:min-w-0">
+                    <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="hidden text-sm font-medium text-muted-foreground sm:inline">Filter:</span>
                     <select
-                        className="h-9 rounded-md border-border bg-background px-3 py-1 text-sm shadow-sm md:w-[150px]"
+                        className="h-9 min-w-0 flex-1 cursor-pointer rounded-lg border-border bg-background px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-[150px] sm:flex-none"
                         value={statusFilter}
                         onChange={(e) => {
                             setStatusFilter(e.target.value);
@@ -162,18 +166,19 @@ function AdminEventsPageContent() {
                         <option value="published">Published</option>
                         <option value="completed">Completed</option>
                     </select>
+                    </div>
                 </div>
             </div>
 
             {isLoading ? (
-                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <Skeleton key={i} className="h-[400px] rounded-xl" />
+                        <Skeleton key={i} className="h-[360px] rounded-xl sm:h-[400px]" />
                     ))}
                 </div>
             ) : events.length > 0 ? (
                 <>
-                    <div className="grid gap-x-6 gap-y-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-6 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-10">
                         {events.map((event, index) => (
                             <AdminEventCardWrapper
                                 key={event.id}
@@ -185,13 +190,13 @@ function AdminEventsPageContent() {
                     </div>
 
                     {pagination && (pagination.has_next || pagination.has_prev) && (
-                        <div className="mt-14 flex items-center justify-center gap-4">
+                        <div className="mt-10 flex flex-wrap items-center justify-center gap-3 sm:mt-14 sm:gap-4">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                                 disabled={!pagination.has_prev}
-                                className="gap-1"
+                                className="cursor-pointer gap-1 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeftIcon className="h-4 w-4" />
                                 Previous
@@ -204,7 +209,7 @@ function AdminEventsPageContent() {
                                 size="sm"
                                 onClick={() => setPage((p) => p + 1)}
                                 disabled={!pagination.has_next}
-                                className="gap-1"
+                                className="cursor-pointer gap-1 disabled:cursor-not-allowed"
                             >
                                 Next
                                 <ChevronRightIcon className="h-4 w-4" />
@@ -213,9 +218,9 @@ function AdminEventsPageContent() {
                     )}
                 </>
             ) : (
-                <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-20 text-center">
-                    <p className="text-lg font-medium text-foreground">No events found for this filter</p>
-                    <p className="mt-2 text-muted-foreground">Try adjusting your filters or create a new event.</p>
+                <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-12 text-center sm:py-20">
+                    <p className="text-base font-medium text-foreground sm:text-lg">No events found for this filter</p>
+                    <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2">Try adjusting your filters or create a new event.</p>
                 </div>
             )}
         </div>
@@ -224,22 +229,20 @@ function AdminEventsPageContent() {
 
 export default function AdminEventsPage() {
     return (
-        <ProtectedRoute requireAdmin>
-            <Suspense fallback={
-                <div className="container mx-auto py-8 px-4">
-                    <div className="mb-8">
-                        <Skeleton className="h-9 w-64" />
-                        <Skeleton className="h-5 w-80 mt-2" />
-                    </div>
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <Skeleton key={i} className="h-[280px] rounded-lg" />
-                        ))}
-                    </div>
+        <Suspense fallback={
+            <div className="container mx-auto py-8 px-4">
+                <div className="mb-8">
+                    <Skeleton className="h-9 w-64" />
+                    <Skeleton className="h-5 w-80 mt-2" />
                 </div>
-            }>
-                <AdminEventsPageContent />
-            </Suspense>
-        </ProtectedRoute>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <Skeleton key={i} className="h-[280px] rounded-lg" />
+                    ))}
+                </div>
+            </div>
+        }>
+            <AdminEventsPageContent />
+        </Suspense>
     );
 }

@@ -12,6 +12,9 @@ const plusJakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Eventix - Discover & Book Events",
   description: "Discover and book events with Eventix",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
