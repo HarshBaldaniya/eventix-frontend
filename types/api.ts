@@ -18,6 +18,7 @@ export interface Event {
   booking_opens_at: string | null;
   booking_closes_at: string | null;
   created_at: string;
+  max_tickets_per_booking?: number;
 }
 
 export interface Booking {
@@ -34,6 +35,7 @@ export interface User {
   id: number;
   email: string;
   name: string | null;
+  role: 'user' | 'admin';
 }
 
 export interface AuthResponse {

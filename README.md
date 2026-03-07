@@ -1,20 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Eventix Frontend
+
+Next.js frontend for the Eventix event booking system. Built with shadcn/ui, Tailwind CSS, and the Eventix backend API.
 
 ## Getting Started
 
-First, run the development server:
+1. **Start the backend** (from the `backend/` directory):
+   ```bash
+   cd ../backend && npm run dev
+   ```
+   The API runs on `http://localhost:3000`.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. **Configure the API URL** (optional):
+   Create `.env.local` with:
+   ```
+   NEXT_PUBLIC_API_URL=http://localhost:3000
+   ```
+   This is the default if omitted.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. **Run the frontend**:
+   ```bash
+   npm run dev
+   ```
+   The app runs on `http://localhost:3001`.
+
+4. Open [http://localhost:3001](http://localhost:3001) in your browser.
+
+## Features
+
+- **Home** – Hero, featured events, browse without login
+- **Events** – Search, sort, paginate event listings
+- **Event Detail** – Full info, booking availability, Book Now CTA
+- **Booking Flow** – Ticket selector, confirm, API integration
+- **My Bookings** – List and cancel bookings (login required)
+- **Auth** – Login, token refresh, protected routes
+
+## Tech Stack
+
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS v4
+- shadcn/ui
+- Sonner (toasts)
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
