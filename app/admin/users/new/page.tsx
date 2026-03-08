@@ -12,6 +12,7 @@ import { Loader } from '@/components/ui/loader';
 import { toast } from 'sonner';
 import { UserPlus, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 
 export default function AdminCreateUserPage() {
   const router = useRouter();
@@ -76,13 +77,7 @@ export default function AdminCreateUserPage() {
       </Link>
 
       <Card className="relative overflow-hidden border border-border/60 bg-card shadow-lg shadow-black/5 sm:rounded-2xl sm:shadow-xl">
-        {/* Loading overlay */}
-        {isSubmitting && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl bg-background/80 backdrop-blur-sm">
-            <Loader size="lg" />
-            <p className="mt-3 text-sm font-medium text-muted-foreground">Creating user...</p>
-          </div>
-        )}
+        <FullPageLoader isOpen={isSubmitting} message="Creating user..." />
 
         <CardHeader className="border-b border-border/40 bg-muted/20 px-4 py-5 sm:px-6 sm:pt-6 sm:pb-5">
           <div className="flex items-start gap-3 sm:gap-4">

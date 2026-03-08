@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Minus, Plus, Ticket, Calendar, Sparkles } from 'lucide-react';
 import { AvailabilitySlots } from '@/components/availability-slots';
 import { cn } from '@/lib/utils';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return 'TBA';
@@ -299,6 +300,8 @@ export default function BookEventPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      <FullPageLoader isOpen={isSubmitting} message="Booking tickets..." />
     </div>
   );
 

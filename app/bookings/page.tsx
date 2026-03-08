@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
@@ -324,6 +325,7 @@ function BookingsPageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <FullPageLoader isOpen={cancellingId !== null} message="Cancelling booking..." />
     </div>
   );
 

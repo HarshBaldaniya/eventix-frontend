@@ -16,6 +16,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 
 function AdminEventCardWrapper({ event, index, onStatusUpdate }: { event: Event, index: number, onStatusUpdate: (id: number, status: string) => Promise<void> }) {
     const [isUpdating, setIsUpdating] = useState(false);
@@ -75,6 +76,7 @@ function AdminEventCardWrapper({ event, index, onStatusUpdate }: { event: Event,
                     </DropdownMenu>
                 )}
             </div>
+            <FullPageLoader isOpen={isUpdating} message="Updating event status..." />
         </div>
     );
 }
@@ -149,23 +151,23 @@ function AdminEventsPageContent() {
                         </Button>
                     </Link>
                     <div className="flex w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-muted/30 p-2 sm:w-auto sm:min-w-0">
-                    <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="hidden text-sm font-medium text-muted-foreground sm:inline">Filter:</span>
-                    <select
-                        className="h-9 min-w-0 flex-1 cursor-pointer rounded-lg border-border bg-background px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-[150px] sm:flex-none"
-                        value={statusFilter}
-                        onChange={(e) => {
-                            setStatusFilter(e.target.value);
-                            setPage(1);
-                        }}
-                    >
-                        <option value="all">All Events</option>
-                        <option value="draft">Draft (Non-Public)</option>
-                        <option value="cancelled">Cancelled (Non-Public)</option>
-                        <option value="coming_soon">Coming Soon</option>
-                        <option value="published">Published</option>
-                        <option value="completed">Completed</option>
-                    </select>
+                        <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="hidden text-sm font-medium text-muted-foreground sm:inline">Filter:</span>
+                        <select
+                            className="h-9 min-w-0 flex-1 cursor-pointer rounded-lg border-border bg-background px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-[150px] sm:flex-none"
+                            value={statusFilter}
+                            onChange={(e) => {
+                                setStatusFilter(e.target.value);
+                                setPage(1);
+                            }}
+                        >
+                            <option value="all">All Events</option>
+                            <option value="draft">Draft (Non-Public)</option>
+                            <option value="cancelled">Cancelled (Non-Public)</option>
+                            <option value="coming_soon">Coming Soon</option>
+                            <option value="published">Published</option>
+                            <option value="completed">Completed</option>
+                        </select>
                     </div>
                 </div>
             </div>
