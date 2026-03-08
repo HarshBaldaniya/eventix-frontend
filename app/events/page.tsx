@@ -1,44 +1,21 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/api';
-import type { Event } from '@/types/api';
-import type { Pagination } from '@/lib/api';
+import { useEvents } from '@/lib/api-cache';
 import { LazyEventCard } from '@/components/lazy-event-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
 function EventsPageContent() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
-
-  const fetchEvents = useCallback(async () => {
-    setIsLoading(true);
-    const params = new URLSearchParams();
-    params.set('page', String(page));
-    params.set('limit', '12');
-    params.set('sort_by', 'created_at');
-    params.set('order', 'desc');
-    const res = await api<Event[]>(`/api/v1/events?${params.toString()}`, { skipAuth: true });
-    if ('data' in res && res.success && Array.isArray(res.data)) {
-      setEvents(res.data as Event[]);
-      if ('pagination' in res && res.pagination) {
-        setPagination(res.pagination);
-      }
-    } else {
-      setEvents([]);
-      setPagination(null);
-    }
-    setIsLoading(false);
-  }, [page]);
-
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+  const { events, pagination, isLoading } = useEvents({
+    page,
+    limit: 12,
+    sort_by: 'created_at',
+    order: 'desc',
+  });
 
   return (
     <div className="relative min-h-screen bg-background overflow-hidden selection:bg-primary/20">
@@ -80,7 +57,7 @@ function EventsPageContent() {
               ))}
             </div>
 
-            {pagination && (pagination.has_next || pagination.has_prev) && (
+            {pagination && pagination.total_pages > 0 && (pagination.has_next || pagination.has_prev) && (
               <div className="mt-20 flex items-center justify-center gap-6 animate-fade-in-up">
                 <Button
                   variant="outline"

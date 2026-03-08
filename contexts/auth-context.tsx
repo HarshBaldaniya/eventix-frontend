@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { User } from '@/types/api';
 import { api, clearTokens, refreshTokens, setTokens } from '@/lib/api';
+import * as authStorage from '@/lib/auth-storage';
 
 type AuthState = {
   user: User | null;
@@ -30,27 +31,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const mergeRoleFromToken = useCallback(async (u: User | null): Promise<User | null> => {
+    if (!u) return null;
+    const role = (await authStorage.getRoleFromToken()) ?? 'user';
+    return { ...u, role };
+  }, []);
+
   const refreshAuth = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('access_token');
+    const token = await authStorage.getAccessToken();
     if (!token) {
       setUser(null);
       setIsLoading(false);
       return;
     }
     try {
+      const refresh = await authStorage.getRefreshToken();
       const res = await api<{ user: User }>('/api/v1/auth/refresh', {
         method: 'POST',
-        body: JSON.stringify({
-          refresh_token: localStorage.getItem('refresh_token'),
-        }),
+        body: JSON.stringify({ refresh_token: refresh }),
         skipAuth: true,
         skipRefresh: true,
       });
       if ('success' in res && res.success && res.data && !Array.isArray(res.data)) {
         const data = res as { success: true; data: { user: User } };
         if (data.data.user) {
-          setUser(data.data.user);
+          await authStorage.setUser(data.data.user);
+          const withRole = await mergeRoleFromToken(data.data.user);
+          setUser(withRole ?? data.data.user);
         }
       }
     } catch {
@@ -59,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [mergeRoleFromToken]);
 
   useEffect(() => {
     const init = async () => {
@@ -67,8 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
         return;
       }
-      const token = localStorage.getItem('access_token');
-      const refresh = localStorage.getItem('refresh_token');
+      const token = await authStorage.getAccessToken();
+      const refresh = await authStorage.getRefreshToken();
       if (!token || !refresh) {
         setUser(null);
         setIsLoading(false);
@@ -76,23 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const ok = await refreshTokens();
       if (ok) {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          try {
-            setUser(JSON.parse(userStr));
-          } catch {
-            setUser(null);
-          }
-        } else {
-          setUser(null);
-        }
+        const storedUser = await authStorage.getUser<User>();
+        const withRole = await mergeRoleFromToken(storedUser ?? null);
+        setUser(withRole ?? null);
       } else {
         setUser(null);
       }
       setIsLoading(false);
     };
     init();
-  }, []);
+  }, [mergeRoleFromToken]);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -111,13 +112,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = res as { success: true; data: { user: User; access_token: string; refresh_token: string } };
       if (data.success && data.data) {
         await setTokens(data.data.access_token, data.data.refresh_token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-        setUser(data.data.user);
+        await authStorage.setUser(data.data.user);
+        const withRole = await mergeRoleFromToken(data.data.user);
+        setUser(withRole ?? data.data.user);
         return { success: true };
       }
       return { success: false, error: 'Login failed' };
     },
-    []
+    [mergeRoleFromToken]
   );
 
   const register = useCallback(
@@ -137,17 +139,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = res as { success: true; data: { user: User; access_token: string; refresh_token: string } };
       if (data.success && data.data) {
         await setTokens(data.data.access_token, data.data.refresh_token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-        setUser(data.data.user);
+        await authStorage.setUser(data.data.user);
+        const withRole = await mergeRoleFromToken(data.data.user);
+        setUser(withRole ?? data.data.user);
         return { success: true };
       }
       return { success: false, error: 'Registration failed' };
     },
-    []
+    [mergeRoleFromToken]
   );
 
   const logout = useCallback(async () => {
-    const refresh = localStorage.getItem('refresh_token');
+    const refresh = await authStorage.getRefreshToken();
     if (refresh) {
       try {
         await api('/api/v1/auth/logout', {
@@ -161,7 +164,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     await clearTokens();
-    localStorage.removeItem('user');
     setUser(null);
   }, []);
 

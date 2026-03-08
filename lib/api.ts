@@ -25,26 +25,22 @@ type RequestOptions = RequestInit & {
   skipRefresh?: boolean;
 };
 
+import * as authStorage from './auth-storage';
+
 async function getAccessToken(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('access_token');
+  return authStorage.getAccessToken();
 }
 
 async function getRefreshToken(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('refresh_token');
+  return authStorage.getRefreshToken();
 }
 
 export async function setTokens(access: string, refresh: string): Promise<void> {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('access_token', access);
-  localStorage.setItem('refresh_token', refresh);
+  await authStorage.setTokens(access, refresh);
 }
 
 export async function clearTokens(): Promise<void> {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
+  await authStorage.clearTokens();
 }
 
 export async function refreshTokens(): Promise<boolean> {
@@ -95,9 +91,8 @@ export async function api<T>(
   return json as ApiResponse<T>;
 }
 
-export function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const token = localStorage.getItem('access_token');
+export async function getAuthHeaders(): Promise<Record<string, string>> {
+  const token = await getAccessToken();
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };
 }

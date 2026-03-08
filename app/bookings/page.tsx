@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
+import { useBookings, useEvent } from '@/lib/api-cache';
 import { ProtectedRoute } from '@/components/protected-route';
 import type { Booking, Event } from '@/types/api';
 import { Button } from '@/components/ui/button';
@@ -40,24 +41,100 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function getBookingGradient(id: number): string {
-  const gradients = [
-    'from-violet-500/20 to-indigo-500/20',
-    'from-emerald-500/20 to-teal-500/20',
-    'from-amber-500/20 to-orange-500/20',
-    'from-rose-500/20 to-pink-500/20',
-  ];
-  return gradients[id % gradients.length];
+function BookingRow({
+  booking,
+  index,
+  cancellingId,
+  onCancelClick,
+}: {
+  booking: Booking;
+  index: number;
+  cancellingId: number | null;
+  onCancelClick: (id: number) => void;
+}) {
+  const { event } = useEvent(booking.event_id);
+  return (
+    <Card
+      className="overflow-hidden rounded-2xl border border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 animate-fade-in-up opacity-0"
+      style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
+    >
+      <div
+        className={`h-2 w-full bg-gradient-to-r ${['from-violet-500/20 to-indigo-500/20', 'from-emerald-500/20 to-teal-500/20', 'from-amber-500/20 to-orange-500/20', 'from-rose-500/20 to-pink-500/20'][booking.id % 4]}`}
+      />
+      <CardHeader className="pb-3 pt-5 px-5 sm:px-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-semibold text-foreground leading-snug">
+              {event ? (
+                <Link href={`/events/${booking.event_id}`} className="hover:text-primary transition-colors">
+                  {event.name}
+                </Link>
+              ) : (
+                `Event #${booking.event_id}`
+              )}
+            </h2>
+            <div className="mt-2.5">
+              <span
+                className={`inline-flex items-center gap-1.5 text-[10px] uppercase font-semibold tracking-wide rounded-full px-2.5 py-1 ${
+                  booking.status === 'confirmed'
+                    ? 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
+                    : 'bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400'
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${booking.status === 'confirmed' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                {booking.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}
+              </span>
+            </div>
+          </div>
+          {booking.status === 'confirmed' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCancelClick(booking.id)}
+              disabled={cancellingId === booking.id}
+              className="cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 shrink-0 rounded-xl"
+            >
+              {cancellingId === booking.id ? 'Cancelling...' : 'Cancel'}
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="px-5 sm:px-6 pb-4">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+              <TicketIcon className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <span className="font-medium">{booking.ticket_count} ticket{booking.ticket_count > 1 ? 's' : ''}</span>
+          </div>
+          <div className="h-4 w-px bg-border/60" />
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+              <CalendarIcon className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <span>{formatDate(booking.created_at)}</span>
+          </div>
+        </div>
+      </CardContent>
+      {booking.status === 'confirmed' && event && (
+        <CardFooter className="border-t border-border/40 bg-muted/10 px-5 sm:px-6 py-3.5">
+          <Link
+            href={`/events/${booking.event_id}`}
+            className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 transition-all"
+          >
+            View Event
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </CardFooter>
+      )}
+    </Card>
+  );
 }
-
-type BookingWithEvent = Booking & { event?: Event | null };
 
 function BookingsPageContent() {
   const searchParams = useSearchParams();
-  const [bookings, setBookings] = useState<BookingWithEvent[]>([]);
-  const [pagination, setPagination] = useState<{ page: number; total_pages: number; total: number } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const { bookings, pagination, isLoading, error: fetchError, mutate } = useBookings(page, 10);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [cancelTargetId, setCancelTargetId] = useState<number | null>(null);
@@ -71,39 +148,9 @@ function BookingsPageContent() {
     }
   }, [searchParams]);
 
-  const fetchBookings = useCallback(async () => {
-    setIsLoading(true);
-    const res = await api<Booking[]>(`/api/v1/bookings?page=${page}&limit=10`);
-    if ('error' in res && res.error) {
-      toast.error(res.error.message);
-      setBookings([]);
-      setPagination(null);
-    } else if ('data' in res && res.success && Array.isArray(res.data)) {
-      const data = res.data as Booking[];
-      const withEvents = await Promise.all(
-        data.map(async (b: Booking) => {
-          const eventRes = await api<Event>(`/api/v1/events/${b.event_id}`);
-          const event =
-            'data' in eventRes && eventRes.success && eventRes.data && !Array.isArray(eventRes.data)
-              ? eventRes.data
-              : null;
-          return { ...b, event };
-        })
-      );
-      setBookings(withEvents);
-      if ('pagination' in res && res.pagination) {
-        setPagination(res.pagination);
-      }
-    } else {
-      setBookings([]);
-      setPagination(null);
-    }
-    setIsLoading(false);
-  }, [page]);
-
   useEffect(() => {
-    fetchBookings();
-  }, [fetchBookings]);
+    if (fetchError) toast.error(fetchError);
+  }, [fetchError]);
 
   const handleCancelClick = (bookingId: number) => {
     setCancelTargetId(bookingId);
@@ -124,7 +171,7 @@ function BookingsPageContent() {
       return;
     }
     toast.success('Booking cancelled');
-    fetchBookings();
+    mutate();
   };
 
   const content = (
@@ -165,84 +212,13 @@ function BookingsPageContent() {
         <>
           <div className="space-y-5">
             {bookings.map((booking, index) => (
-              <Card
+              <BookingRow
                 key={booking.id}
-                className="overflow-hidden rounded-2xl border border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 animate-fade-in-up opacity-0"
-                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
-              >
-                <div
-                  className={`h-2 w-full bg-gradient-to-r ${getBookingGradient(booking.id)}`}
-                />
-                <CardHeader className="pb-3 pt-5 px-5 sm:px-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-lg font-semibold text-foreground leading-snug">
-                        {booking.event ? (
-                          <Link
-                            href={`/events/${booking.event_id}`}
-                            className="hover:text-primary transition-colors"
-                          >
-                            {booking.event.name}
-                          </Link>
-                        ) : (
-                          `Event #${booking.event_id}`
-                        )}
-                      </h2>
-                      <div className="mt-2.5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 text-[10px] uppercase font-semibold tracking-wide rounded-full px-2.5 py-1 ${booking.status === 'confirmed'
-                            ? 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
-                            : 'bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400'
-                            }`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${booking.status === 'confirmed' ? 'bg-emerald-500' : 'bg-red-500'
-                            }`} />
-                          {booking.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}
-                        </span>
-                      </div>
-                    </div>
-                    {booking.status === 'confirmed' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCancelClick(booking.id)}
-                        disabled={cancellingId === booking.id}
-                        className="cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 shrink-0 rounded-xl"
-                      >
-                        {cancellingId === booking.id ? 'Cancelling...' : 'Cancel'}
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="px-5 sm:px-6 pb-4">
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-                        <TicketIcon className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <span className="font-medium">{booking.ticket_count} ticket{booking.ticket_count > 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="h-4 w-px bg-border/60" />
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-                        <CalendarIcon className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <span>{formatDate(booking.created_at)}</span>
-                    </div>
-                  </div>
-                </CardContent>
-                {booking.status === 'confirmed' && booking.event && (
-                  <CardFooter className="border-t border-border/40 bg-muted/10 px-5 sm:px-6 py-3.5">
-                    <Link
-                      href={`/events/${booking.event_id}`}
-                      className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 transition-all"
-                    >
-                      View Event
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </CardFooter>
-                )}
-              </Card>
+                booking={booking}
+                index={index}
+                cancellingId={cancellingId}
+                onCancelClick={handleCancelClick}
+              />
             ))}
           </div>
 

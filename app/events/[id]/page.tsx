@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { useEvent } from '@/lib/api-cache';
 import { useAuth } from '@/contexts/auth-context';
 import type { Event } from '@/types/api';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { EventStatusBadge } from '@/components/event-status-badge';
 import { AvailabilitySlots } from '@/components/availability-slots';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Calendar, Users, Clock, Ticket, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Ticket, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function formatDate(dateStr: string | null): string {
@@ -51,28 +50,10 @@ export default function EventDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const id = typeof params.id === 'string' ? params.id : params.id?.[0] ?? null;
+  const { event, isLoading, error: fetchError } = useEvent(id);
 
-  const id = typeof params.id === 'string' ? params.id : params.id?.[0];
-
-  useEffect(() => {
-    if (!id) return;
-    const fetchEvent = async () => {
-      const res = await api<Event>(`/api/v1/events/${id}`, { skipAuth: true });
-      if ('error' in res && res.error) {
-        setError(res.error.message || 'Event not found');
-        setEvent(null);
-      } else if ('data' in res && res.success && res.data && !Array.isArray(res.data)) {
-        setEvent(res.data);
-      } else {
-        setError('Event not found');
-      }
-      setIsLoading(false);
-    };
-    fetchEvent();
-  }, [id]);
+  const error = fetchError || (!isLoading && id && !event ? 'Event not found' : null);
 
   const handleBookClick = () => {
     if (!isAuthenticated) {

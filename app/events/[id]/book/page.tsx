@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { useEvent } from '@/lib/api-cache';
 import { useAuth } from '@/contexts/auth-context';
 import { ProtectedRoute } from '@/components/protected-route';
 import type { Event } from '@/types/api';
@@ -38,32 +39,14 @@ export default function BookEventPage() {
   const params = useParams();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const [event, setEvent] = useState<Event | null>(null);
+  const id = typeof params.id === 'string' ? params.id : params.id?.[0] ?? null;
+  const { event, isLoading, error: fetchError } = useEvent(id);
   const [ticketCount, setTicketCount] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  const id = typeof params.id === 'string' ? params.id : params.id?.[0];
-
-  useEffect(() => {
-    if (!id) return;
-    const fetchEvent = async () => {
-      const res = await api<Event>(`/api/v1/events/${id}`, { skipAuth: true });
-      if ('error' in res && res.error) {
-        setError(res.error.message || 'Event not found');
-        setEvent(null);
-      } else if ('data' in res && res.success && res.data && !Array.isArray(res.data)) {
-        setEvent(res.data);
-      } else {
-        setError('Event not found');
-      }
-      setIsLoading(false);
-    };
-    fetchEvent();
-  }, [id]);
+  const error = fetchError || (!isLoading && id && !event ? 'Event not found' : null);
 
   const bookingLimit = event?.max_tickets_per_booking || 6;
   const maxTickets = event
