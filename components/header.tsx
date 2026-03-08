@@ -119,17 +119,23 @@ export function Header() {
                   </DropdownMenu>
                 </div>
               ) : (
-                <Link
-                  href="/login"
-                  className={cn(
-                    'flex h-9 min-w-18 cursor-pointer items-center justify-center rounded-lg px-5 text-sm font-medium transition-colors',
-                    pathname === '/login'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  )}
-                >
-                  Login
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/login"
+                    className={cn(
+                      'flex h-9 cursor-pointer items-center justify-center rounded-lg px-4 text-sm font-semibold transition-all hover:bg-muted',
+                      pathname === '/login' ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="flex h-9 cursor-pointer items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-primary/20"
+                  >
+                    Sign up
+                  </Link>
+                </div>
               )}
             </div>
           )}

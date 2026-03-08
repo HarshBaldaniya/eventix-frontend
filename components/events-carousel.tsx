@@ -10,9 +10,10 @@ import { cn } from '@/lib/utils';
 interface EventsCarouselProps {
   events: Event[];
   baseIndex?: number;
+  variant?: 'comingSoon' | 'soldOut';
 }
 
-export function EventsCarousel({ events, baseIndex = 0 }: EventsCarouselProps) {
+export function EventsCarousel({ events, baseIndex = 0, variant = 'comingSoon' }: EventsCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -43,15 +44,24 @@ export function EventsCarousel({ events, baseIndex = 0 }: EventsCarouselProps) {
       <div
         ref={scrollRef}
         onScroll={checkScroll}
-        className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide pb-2 px-6 snap-x snap-mandatory"
+        className="flex gap-8 overflow-x-auto scroll-smooth scrollbar-hide py-8 px-6 snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {events.map((event, index) => (
           <div
             key={event.id}
-            className="flex-shrink-0 w-[300px] sm:w-[320px] h-[360px] snap-center p-[1px]"
+            className={cn(
+              "flex-shrink-0 w-[300px] sm:w-[320px] h-[380px] snap-center p-1 transition-all duration-500",
+              variant === 'soldOut' && "grayscale opacity-50 hover:grayscale-0 hover:opacity-100"
+            )}
           >
-            <EventCard event={event} compact index={baseIndex + index} className="h-full" variant="comingSoon" />
+            <EventCard
+              event={event}
+              compact
+              index={baseIndex + index}
+              className="h-full"
+              variant={variant === 'comingSoon' ? 'comingSoon' : 'default'}
+            />
           </div>
         ))}
       </div>

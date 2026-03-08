@@ -19,6 +19,7 @@ type AuthState = {
 
 type AuthContextValue = AuthState & {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
 };
@@ -119,6 +120,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const register = useCallback(
+    async (name: string, email: string, password: string) => {
+      const res = await api<{ user: User; access_token: string; refresh_token: string }>(
+        '/api/v1/auth/register',
+        {
+          method: 'POST',
+          body: JSON.stringify({ name, email, password }),
+          skipAuth: true,
+          skipRefresh: true,
+        }
+      );
+      if ('error' in res && res.error) {
+        return { success: false, error: res.error.message };
+      }
+      const data = res as { success: true; data: { user: User; access_token: string; refresh_token: string } };
+      if (data.success && data.data) {
+        await setTokens(data.data.access_token, data.data.refresh_token);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        setUser(data.data.user);
+        return { success: true };
+      }
+      return { success: false, error: 'Registration failed' };
+    },
+    []
+  );
+
   const logout = useCallback(async () => {
     const refresh = localStorage.getItem('refresh_token');
     if (refresh) {
@@ -143,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isAuthenticated: !!user,
     login,
+    register,
     logout,
     refreshAuth,
   };
