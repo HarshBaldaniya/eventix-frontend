@@ -177,6 +177,10 @@ export function Header() {
                 <nav className="flex flex-col gap-0.5 p-3" role="navigation">
                   {navLinks.map((link) => {
                     const Icon = link.icon;
+                    const isActive =
+                      link.href === '/events'
+                        ? pathname === '/events' || pathname.startsWith('/events/')
+                        : pathname === link.href;
                     return (
                       <Link
                         key={link.href}
@@ -184,7 +188,7 @@ export function Header() {
                         onClick={closeMobileMenu}
                         className={cn(
                           'flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                          pathname === link.href
+                          isActive
                             ? 'bg-primary text-primary-foreground'
                             : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                         )}
@@ -244,7 +248,7 @@ export function Header() {
                           'flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
                           pathname === '/login'
                             ? 'bg-primary text-primary-foreground'
-                            : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                            : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                         )}
                       >
                         <User className="h-4 w-4 shrink-0" />
